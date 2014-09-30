@@ -148,8 +148,8 @@ fi;
 while :; do
 
 
-# tmp=`ngrep -d "$1" -q -l -W byline -n 1 dianomiNew | grep -o "\(:\([SCHD][AKQJT789]\)\{10\}:\)\{1\}"`
-  read tmp;
+  tmp=`ngrep -d "$1" -q -l -W byline -n 1 dianomiNew | grep -o "\(:\([SCHD][AKQJT789]\)\{10\}:\)\{1\}"`
+#  read tmp;
   clear;
   counter_reset;
   make_matrix;
