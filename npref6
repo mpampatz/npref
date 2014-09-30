@@ -1,0 +1,164 @@
+((S=1 , C=2 , D=3 , H=4));
+
+
+function usage ()
+{
+echo "usage: npref6 <interface>"
+}
+
+function make_matrix ()
+{
+
+for suit in S D C H; do 
+  
+  ((sum[suit]=0));
+  ((i=1));
+  for value in A K Q J T 9 8 7; do 
+
+      if [[ "$tmp" == *$suit$value* ]]; 
+        then 
+          (($suit[i]=1));
+          ((sum[suit]++));
+        else 
+          (($suit[i]=0));
+      fi;
+
+  ((i++));
+  done;
+
+
+done;
+
+}
+
+
+
+function permutations ()
+{
+
+superstate='';
+((sigma[suit]=0));
+
+# state
+if ((sum[suit]>=4)); 
+then
+  for ((i=1 ; i<=8 ; i++)); do
+    ((state[i]=$suit[i]));
+  done;
+else
+  for ((i=1 ; i<=8 ; i++)); do
+    ((state[i]=($suit[i]-1)**2));
+  done;
+fi;
+
+# superstate
+if ((sum[suit]>= 4 )); 
+then
+  for ((i=1 ; i<=8 ; i++)); do
+    if ((i<=8-sum[suit])); 
+    then 
+      superstate=$superstate'1 ';
+    fi;
+  done;
+else
+  for ((i=1 ; i<=8 ; i++)); do
+    if ((i<=sum[suit])); 
+    then 
+      superstate=$superstate'1 ';
+    fi;
+  done;
+fi;
+
+# reorder state to superstate
+while [[ "${state[*]}" != $superstate* ]]; do
+  for ((i=1 ; i<8 ; i++)); do
+    if ((state[i]==0 && state[i+1]==1)); 
+    then
+     ((state[i]=1 , state[i+1]=0));
+     ((sigma[suit]++));
+     break;
+    fi;
+  done;
+done;
+
+}
+
+
+
+function mpaz_calc ()
+{
+if ((sum[suit]>=4)); 
+then
+  mpazes[$suit]=`dc <<< "2k ${sum[suit]}  ${sigma[suit]} 8 ${sum[suit]} - / -  p"`;
+else
+  mpazes[$suit]=`dc <<< "2k ${sigma[suit]} ${sum[suit]}  / p"`;
+fi;
+}
+
+
+function mpaz_sum ()
+{
+mpazoles=0;
+for suit in S C D H; do
+  mpazoles=`dc <<< " 2k $mpazoles ${mpazes[suit]} + p"`;
+done;
+}
+
+function print ()
+{
+printf "\n%8s%17s%5s%7s%8s" '\' 'A K Q J T 9 8 7' sum         sigma    mpazes
+printf "\n%8s%17s%5s%7s%8s" spades   "${S[*]}"  ${sum[S]}  ${sigma[S]}  ${mpazes[S]}
+printf "\n%8s%17s%5s%7s%8s" clubs    "${C[*]}"  ${sum[C]}  ${sigma[C]}  ${mpazes[C]}
+printf "\n%8s%17s%5s%7s%8s" diamons  "${D[*]}"  ${sum[D]}  ${sigma[D]}  ${mpazes[D]}
+printf "\n%8s%17s%5s%7s%8s" hearts   "${H[*]}"  ${sum[H]}  ${sigma[H]}  ${mpazes[H]}
+printf "\n%45s"                                                 $mpazoles
+echo;
+}
+
+
+
+function counter_reset ()
+{
+for suit in S C D H; do
+  ((sigma[suit]=0)) ;
+done;
+  superstate='';
+}
+
+while [[ "$1" = -* ]]; do 
+  case "$1" in
+    -h | --hels)
+      usage
+      exit
+      ;;
+    -*)
+      echo "Invalid option";
+      usage
+      exit
+      ;;
+  esac
+done
+
+if [[ $# -gt 1 ]]; then
+  echo "Too many arguments"
+  usage
+  exit
+fi;
+
+while :; do
+
+
+# tmp=`ngrep -d "$1" -q -l -W byline -n 1 dianomiNew | grep -o "\(:\([SCHD][AKQJT789]\)\{10\}:\)\{1\}"`
+  read tmp;
+  clear;
+  counter_reset;
+  make_matrix;
+
+  for suit in S C D H; do
+    permutations;
+    mpaz_calc;
+  done;
+
+  mpaz_sum;
+  print;
+done
